@@ -137,8 +137,14 @@ if [[ $KSU_ENABLED == "true" ]]; then
     mkdir -p include/linux
     cp -r $WORKDIR/susfs4ksu/kernel_patches/include/linux/* include/linux/
 
-        # 1. Patch nhân Kernel chính
+            # 1. Patch nhân Kernel chính
     patch -p1 -F 3 < $WORKDIR/susfs4ksu/kernel_patches/50_add_susfs_in_kernel-4.14.patch
+
+    # 2. Đảm bảo fs/Makefile đã biên dịch susfs.o
+    if ! grep -q "susfs.o" fs/Makefile; then
+        echo "obj-\$(CONFIG_KSU_SUSFS) += susfs.o" >> fs/Makefile
+    fi
+
 
     # 2. KHAI BÁO THỦ CÔNG KCONFIG CHO SUSFS (Tránh bị olddefconfig xóa)
     if ! grep -q "config KSU_SUSFS" fs/Kconfig; then
