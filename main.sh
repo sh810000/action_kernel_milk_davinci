@@ -132,7 +132,7 @@ if [[ $KSU_ENABLED == "true" ]]; then
     echo "CONFIG_HAVE_KPROBES=y" >> $DEVICE_DEFCONFIG_FILE
     echo "CONFIG_KPROBE_EVENTS=y" >> $DEVICE_DEFCONFIG_FILE
 
-    KSU_GIT_VERSION=$(cd KernelSU-Next && git rev-list --count HEAD)
+    KSU_GIT_VERSION=$(cd KernelSU && git rev-list --count HEAD)
     KERNELSU_VERSION=$(($KSU_GIT_VERSION + 10200))
     msg "KernelSU Version: $KERNELSU_VERSION"
 
@@ -143,7 +143,7 @@ else
     KERNELSU_VERSION="Disabled"
     sed -i "s/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION=\"-$KERNEL_NAME\"/" $DEVICE_DEFCONFIG_FILE
 fi
-
+cd $KERNEL_DIR
 # Build
 msg "Build"
 
