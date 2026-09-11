@@ -194,17 +194,27 @@ if [ -n "$COMMON_DEFCONFIG" ]; then
 fi
 make O=out $args "$DEVICE_DEFCONFIG"
 
-# ÉP BẬT CONFIG SUSFS VÀO .config ĐỂ TRÁNH BỊ GHI ĐÈ
+# --- ÉP BẬT CONFIG KSU & SUSFS VÀO .config ---
 cd $KERNEL_DIR
 bash scripts/config --file out/.config \
+    -e CONFIG_KSU \
     -e CONFIG_KSU_SUSFS \
     -e CONFIG_KSU_SUSFS_SUS_PATH \
     -e CONFIG_KSU_SUSFS_SUS_MOUNT \
     -e CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT \
     -e CONFIG_KPROBES \
     -e CONFIG_HAVE_KPROBES \
-    -e CONFIG_KPROBE_EVENTS
+    -e CONFIG_KPROBE_EVENTS \
+    -e CONFIG_OVERLAY_FS
+
+# Khóa cấu hình và tự động sửa lỗi dependencies
+make O=out $args olddefconfig
+
+# In kết quả ra log Actions để kiểm chứng
+msg "Checking final KSU & SUSFS configs:"
+grep -E "KSU|SUSFS|KPROBES" out/.config || echo "CẢNH BÁO: Kbuild đã từ chối cấu hình!"
 cd $WORKDIR/$KERNEL_NAME
+# ---------------------------------------------
 
 make O=out $args kernelversion
 make O=out $args -j"$(nproc --all)"
