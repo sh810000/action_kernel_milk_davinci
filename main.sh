@@ -196,7 +196,7 @@ make O=out $args "$DEVICE_DEFCONFIG"
 
 # ÉP BẬT CONFIG SUSFS VÀO .config ĐỂ TRÁNH BỊ GHI ĐÈ
 cd $KERNEL_DIR
-python3 scripts/config --file out/.config \
+bash scripts/config --file out/.config \
     -e CONFIG_KSU_SUSFS \
     -e CONFIG_KSU_SUSFS_SUS_PATH \
     -e CONFIG_KSU_SUSFS_SUS_MOUNT \
