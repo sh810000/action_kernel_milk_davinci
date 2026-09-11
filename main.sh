@@ -75,7 +75,7 @@ echo "COMMON_DEFCONFIG: $COMMON_DEFCONFIG"
 # Set variables
 WORKDIR="$(pwd)"
 
-CLANG_DLINK="$(curl -s https://api.github.com/repos/$CLANG_REPO/releases/latest\
+CLANG_DLINK="$(curl -s https://github.com/ZyCromerZ/Clang/releases/download/13.0.1-20211126-release/Clang-13.0.1-20211126.tar.gz
 | grep -wo "https.*" | grep Clang-.*.tar.gz | sed 's/.$//')"
 CLANG_DIR="$WORKDIR/Clang/bin"
 
