@@ -352,7 +352,7 @@ cd $KERNEL_DIR
 
 msg "KernelSU"
 if [[ $KSU_ENABLED == "true" ]]; then
-    curl -LSs "https://raw.githubusercontent.com/$KERNELSU_REPO/main/kernel/setup.sh" | bash -s $KSU_TARGET
+    curl -LSs "https://raw.githubusercontent.com/KimelaZPrjkt/KernelSU-Next-susfs/v1.1.1/kernel/setup.sh" | bash v1.1.1 
 
     echo "CONFIG_KPROBES=y" >> $DEVICE_DEFCONFIG_FILE
     echo "CONFIG_HAVE_KPROBES=y" >> $DEVICE_DEFCONFIG_FILE
