@@ -130,26 +130,17 @@ if [[ $KSU_ENABLED == "true" ]]; then
     curl -LSs "https://raw.githubusercontent.com/$KERNELSU_REPO/v3.2.0-legacy/kernel/setup.sh" | bash -s $KSU_TARGET
 
     # --- BẮT ĐẦU PATCH SUSFS ---
-    msg "Injecting SUSFS Patches"
+    msg "Injecting SUSFS Patches into Kernel"
     git clone --depth=1 -b kernel-4.14 https://gitlab.com/simonpunk/susfs4ksu.git $WORKDIR/susfs4ksu
 
     cp -r $WORKDIR/susfs4ksu/kernel_patches/fs/* fs/
     mkdir -p include/linux
     cp -r $WORKDIR/susfs4ksu/kernel_patches/include/linux/* include/linux/
 
-    # Patch Kernel
+    # 1. CHỈ patch nhân Kernel chính, KHÔNG patch KernelSU-Next nữa vì đã có sẵn
     patch -p1 -F 3 < $WORKDIR/susfs4ksu/kernel_patches/50_add_susfs_in_kernel-4.14.patch
-    
-    # Patch KernelSU-Next (Đã sửa lại -p1)
-    if [ -d "KernelSU-Next" ]; then
-        cd KernelSU-Next
-        if [ -f "$WORKDIR/susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch" ]; then
-            patch -p1 -F 3 --forward < "$WORKDIR/susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch" || true
-        fi
-        cd ..
-    fi
 
-    # Ghi config thô vào defconfig
+    # 2. Ghi config thô vào defconfig
     echo "CONFIG_KSU_SUSFS=y" >> $DEVICE_DEFCONFIG_FILE
     echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> $DEVICE_DEFCONFIG_FILE
     echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> $DEVICE_DEFCONFIG_FILE
