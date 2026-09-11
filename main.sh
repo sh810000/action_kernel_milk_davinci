@@ -129,23 +129,34 @@ msg "KernelSU & SUSFS"
 if [[ $KSU_ENABLED == "true" ]]; then
     curl -LSs "https://raw.githubusercontent.com/$KERNELSU_REPO/v3.2.0-legacy/kernel/setup.sh" | bash -s $KSU_TARGET
 
-    # --- BẮT ĐẦU PATCH SUSFS ---
+    # --- BẮT ĐẦU PATCH SUSFS CHUẨN XÁC ---
     msg "Injecting SUSFS Patches"
     git clone --depth=1 -b kernel-4.14 https://gitlab.com/simonpunk/susfs4ksu.git $WORKDIR/susfs4ksu
 
-    # Copy lõi của susfs vào kernel
-    cp $WORKDIR/susfs4ksu/kernel_patches/fs/susfs.c fs/
-    cp $WORKDIR/susfs4ksu/kernel_patches/include/linux/susfs.h include/linux/
-    
-    # Dùng -F 3 (Fuzz) để bypass lỗi hunk do lệch context trên kernel 4.14
+    # 1. Copy toàn bộ các file header và source code của susfs vào kernel source
+    cp -r $WORKDIR/susfs4ksu/kernel_patches/fs/* fs/
+    mkdir -p include/linux
+    cp -r $WORKDIR/susfs4ksu/kernel_patches/include/linux/* include/linux/
+
+    # 2. Thực hiện patch kernel chính với cờ -F 3
     patch -p1 -F 3 < $WORKDIR/susfs4ksu/kernel_patches/50_add_susfs_in_kernel-4.14.patch
     
-    # Patch KernelSU-Next để tương thích SUSFS
-    cd KernelSU-Next
-    patch -p1 -F 3 < $WORKDIR/susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch
-    cd ..
+    # 3. Patch KernelSU-Next (đảm bảo đứng đúng thư mục KernelSU-Next)
+    if [ -d "KernelSU-Next" ]; then
+        cd KernelSU-Next
+        if [ -f "$WORKDIR/susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch" ]; then
+            patch -p1 -F 3 < "$WORKDIR/susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch"
+        fi
+        cd ..
+    elif [ -d "KernelSU" ]; then
+        cd KernelSU
+        if [ -f "$WORKDIR/susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch" ]; then
+            patch -p1 -F 3 < "$WORKDIR/susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch"
+        fi
+        cd ..
+    fi
 
-    # Tự động chèn cờ cấu hình SUSFS vào defconfig
+    # 4. Tự động chèn cờ cấu hình SUSFS vào defconfig
     echo "CONFIG_KSU_SUSFS=y" >> $DEVICE_DEFCONFIG_FILE
     echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> $DEVICE_DEFCONFIG_FILE
     echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> $DEVICE_DEFCONFIG_FILE
@@ -158,7 +169,7 @@ if [[ $KSU_ENABLED == "true" ]]; then
 
     KSU_GIT_VERSION=$(cd KernelSU-Next && git rev-list --count HEAD)
     KERNELSU_VERSION=$(($KSU_GIT_VERSION + 10200))
-    msg "KernelSU Version: $KERNELSU_VERSION"
+    msg "KernelSU Version: $KERNEL_VERSION"
 
     TITLE=$TITLE-$KERNELSU_VERSION
     sed -i "s/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION=\"-$KERNELSU_VERSION-$KERNEL_NAME\"/" $DEVICE_DEFCONFIG_FILE
