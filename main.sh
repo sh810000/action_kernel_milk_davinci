@@ -10,9 +10,9 @@ KERNEL_BRANCH="vantom-14"
 KERNEL_TYPE="vantom"
 
 # KernelSU
-KERNELSU_REPO="tiann/KernelSU"
+KERNELSU_REPO="KernelSU-Next/KernelSU-Next"
 KSU_ENABLED="false"
-KSU_TARGET="v0.9.5"
+KSU_TARGET="v3.0.0"
 
 # Anykernel3
 ANYKERNEL3_GIT="https://github.com/SchweGELBin/AnyKernel3_davinci.git"
@@ -127,13 +127,13 @@ cd $KERNEL_DIR
 
 msg "KernelSU"
 if [[ $KSU_ENABLED == "true" ]]; then
-    curl -LSs "https://raw.githubusercontent.com/$KERNELSU_REPO/main/kernel/setup.sh" | bash -s $KSU_TARGET
+    curl -LSs "https://raw.githubusercontent.com/$KERNELSU_REPO/v3.0.0/kernel/setup.sh" | bash -s $KSU_TARGET
 
     echo "CONFIG_KPROBES=y" >> $DEVICE_DEFCONFIG_FILE
     echo "CONFIG_HAVE_KPROBES=y" >> $DEVICE_DEFCONFIG_FILE
     echo "CONFIG_KPROBE_EVENTS=y" >> $DEVICE_DEFCONFIG_FILE
 
-    KSU_GIT_VERSION=$(cd KernelSU && git rev-list --count HEAD)
+    KSU_GIT_VERSION=$(cd KernelSU-Next && git rev-list --count HEAD)
     KERNELSU_VERSION=$(($KSU_GIT_VERSION + 10200))
     msg "KernelSU Version: $KERNELSU_VERSION"
 
@@ -171,7 +171,9 @@ LLVM_IAS=1"
 
 rm -rf out
 
-make O=out $args "$COMMON_DEFCONFIG"
+if [ -n "$COMMON_DEFCONFIG" ]; then
+    make O=out $args "$COMMON_DEFCONFIG"
+fi
 make O=out $args "$DEVICE_DEFCONFIG"
 
 make O=out $args kernelversion
