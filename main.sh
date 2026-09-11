@@ -12,7 +12,7 @@ KERNEL_TYPE="vantom"
 # KernelSU
 KERNELSU_REPO="tiann/KernelSU"
 KSU_ENABLED="false"
-KSU_TARGET="v0.9.5"
+KSU_TARGET="main"
 
 # Anykernel3
 ANYKERNEL3_GIT="https://github.com/SchweGELBin/AnyKernel3_davinci.git"
@@ -127,7 +127,7 @@ cd $KERNEL_DIR
 
 msg "KernelSU"
 if [[ $KSU_ENABLED == "true" ]]; then
-    curl -LSs "https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/main/kernel/setup.sh" | bash
+    curl -LSs "https://raw.githubusercontent.com/$KERNELSU_REPO/main/kernel/setup.sh" | bash -s $KSU_TARGET
 
     echo "CONFIG_KPROBES=y" >> $DEVICE_DEFCONFIG_FILE
     echo "CONFIG_HAVE_KPROBES=y" >> $DEVICE_DEFCONFIG_FILE
@@ -205,12 +205,17 @@ msg "Release Files"
 echo "
 ## [$KERNEL_NAME]($README)
 - **Time**: $TIME # CET
+
 - **Codename**: $DEVICE_CODE
 - **Kernel Type**: $KERNEL_TYPE
+
 <br>
+
 - **[Kernel]($KERNEL_SOURCE) Version**: $KERNEL_VERSION
 - **[KernelSU]($KERNELSU_SOURCE) Version**: $KERNELSU_VERSION
+
 <br>
+
 - **[CLANG]($CLANG_SOURCE) Version**: $CLANG_VERSION
 - **LLD Version**: $LLD_VERSION
 " > bodyFile.md
@@ -425,12 +430,17 @@ msg "Release Files"
 echo "
 ## [$KERNEL_NAME]($README)
 - **Time**: $TIME # CET
+
 - **Codename**: $DEVICE_CODE
 - **Kernel Type**: $KERNEL_TYPE
+
 <br>
+
 - **[Kernel]($KERNEL_SOURCE) Version**: $KERNEL_VERSION
 - **[KernelSU]($KERNELSU_SOURCE) Version**: $KERNELSU_VERSION
+
 <br>
+
 - **[CLANG]($CLANG_SOURCE) Version**: $CLANG_VERSION
 - **LLD Version**: $LLD_VERSION
 " > bodyFile.md
