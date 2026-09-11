@@ -137,16 +137,19 @@ if [[ $KSU_ENABLED == "true" ]]; then
     mkdir -p include/linux
     cp -r $WORKDIR/susfs4ksu/kernel_patches/include/linux/* include/linux/
 
+    # Patch Kernel
     patch -p1 -F 3 < $WORKDIR/susfs4ksu/kernel_patches/50_add_susfs_in_kernel-4.14.patch
     
+    # Patch KernelSU-Next (Đã sửa lại -p1)
     if [ -d "KernelSU-Next" ]; then
         cd KernelSU-Next
         if [ -f "$WORKDIR/susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch" ]; then
-            patch -p0 -F 3 --forward < "$WORKDIR/susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch" || true
+            patch -p1 -F 3 --forward < "$WORKDIR/susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch" || true
         fi
         cd ..
     fi
 
+    # Ghi config thô vào defconfig
     echo "CONFIG_KSU_SUSFS=y" >> $DEVICE_DEFCONFIG_FILE
     echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> $DEVICE_DEFCONFIG_FILE
     echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> $DEVICE_DEFCONFIG_FILE
@@ -200,10 +203,20 @@ if [ -n "$COMMON_DEFCONFIG" ]; then
 fi
 make O=out $args "$DEVICE_DEFCONFIG"
 
+# ÉP BẬT CONFIG SUSFS VÀO .config ĐỂ TRÁNH BỊ GHI ĐÈ
+cd $KERNEL_DIR
+python3 scripts/config --file out/.config \
+    -e CONFIG_KSU_SUSFS \
+    -e CONFIG_KSU_SUSFS_SUS_PATH \
+    -e CONFIG_KSU_SUSFS_SUS_MOUNT \
+    -e CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT \
+    -e CONFIG_KPROBES \
+    -e CONFIG_HAVE_KPROBES \
+    -e CONFIG_KPROBE_EVENTS
+cd $WORKDIR/$KERNEL_NAME
+
 make O=out $args kernelversion
 make O=out $args -j"$(nproc --all)"
-msg "Kernel version: $KERNEL_VERSION"
-
 # Package
 msg "Package"
 cd $WORKDIR
