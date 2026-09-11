@@ -137,14 +137,29 @@ if [[ $KSU_ENABLED == "true" ]]; then
     mkdir -p include/linux
     cp -r $WORKDIR/susfs4ksu/kernel_patches/include/linux/* include/linux/
 
-    # 1. CHỈ patch nhân Kernel chính, KHÔNG patch KernelSU-Next nữa vì đã có sẵn
+        # 1. Patch nhân Kernel chính
     patch -p1 -F 3 < $WORKDIR/susfs4ksu/kernel_patches/50_add_susfs_in_kernel-4.14.patch
 
-    # 2. Ghi config thô vào defconfig
+    # 2. KHAI BÁO THỦ CÔNG KCONFIG CHO SUSFS (Tránh bị olddefconfig xóa)
+    if ! grep -q "config KSU_SUSFS" fs/Kconfig; then
+        echo "" >> fs/Kconfig
+        echo "config KSU_SUSFS" >> fs/Kconfig
+        echo "	bool \"Enable SUSFS for KernelSU\"" >> fs/Kconfig
+        echo "	default y" >> fs/Kconfig
+        echo "config KSU_SUSFS_SUS_PATH" >> fs/Kconfig
+        echo "	bool \"Enable sus_path in SUSFS\"" >> fs/Kconfig
+        echo "	default y" >> fs/Kconfig
+        echo "config KSU_SUSFS_SUS_MOUNT" >> fs/Kconfig
+        echo "	bool \"Enable sus_mount in SUSFS\"" >> fs/Kconfig
+        echo "	default y" >> fs/Kconfig
+    fi
+
+    # 3. Ghi config thô vào defconfig
     echo "CONFIG_KSU_SUSFS=y" >> $DEVICE_DEFCONFIG_FILE
     echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> $DEVICE_DEFCONFIG_FILE
     echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> $DEVICE_DEFCONFIG_FILE
     echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT=y" >> $DEVICE_DEFCONFIG_FILE
+
     # --- KẾT THÚC PATCH SUSFS ---
 
     echo "CONFIG_KPROBES=y" >> $DEVICE_DEFCONFIG_FILE
