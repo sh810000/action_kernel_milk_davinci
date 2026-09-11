@@ -129,29 +129,23 @@ msg "KernelSU & SUSFS"
 if [[ $KSU_ENABLED == "true" ]]; then
     curl -LSs "https://raw.githubusercontent.com/$KERNELSU_REPO/v3.2.0-legacy/kernel/setup.sh" | bash -s $KSU_TARGET
 
-    # --- BẮT ĐẦU PATCH SUSFS CHUẨN XÁC ---
+    # --- BẮT ĐẦU PATCH SUSFS ---
     msg "Injecting SUSFS Patches"
     git clone --depth=1 -b kernel-4.14 https://gitlab.com/simonpunk/susfs4ksu.git $WORKDIR/susfs4ksu
 
-    # 1. Copy toàn bộ các file header và source code của susfs vào kernel source
+    # 1. Copy file lõi susfs vào kernel
     cp -r $WORKDIR/susfs4ksu/kernel_patches/fs/* fs/
     mkdir -p include/linux
     cp -r $WORKDIR/susfs4ksu/kernel_patches/include/linux/* include/linux/
 
-    # 2. Thực hiện patch kernel chính với cờ -F 3
+    # 2. Patch kernel chính với cờ -F 3
     patch -p1 -F 3 < $WORKDIR/susfs4ksu/kernel_patches/50_add_susfs_in_kernel-4.14.patch
     
-    # 3. Patch KernelSU-Next (đảm bảo đứng đúng thư mục KernelSU-Next)
+    # 3. Patch KernelSU-Next (dùng -p0 và --forward để bỏ qua phần đã tồn tại)
     if [ -d "KernelSU-Next" ]; then
         cd KernelSU-Next
         if [ -f "$WORKDIR/susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch" ]; then
-            patch -p1 -F 3 < "$WORKDIR/susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch"
-        fi
-        cd ..
-    elif [ -d "KernelSU" ]; then
-        cd KernelSU
-        if [ -f "$WORKDIR/susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch" ]; then
-            patch -p1 -F 3 < "$WORKDIR/susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch"
+            patch -p0 -F 3 --forward < "$WORKDIR/susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch" || true
         fi
         cd ..
     fi
@@ -169,7 +163,53 @@ if [[ $KSU_ENABLED == "true" ]]; then
 
     KSU_GIT_VERSION=$(cd KernelSU-Next && git rev-list --count HEAD)
     KERNELSU_VERSION=$(($KSU_GIT_VERSION + 10200))
-    msg "KernelSU Version: $KERNEL_VERSION"
+    msg "KernelSU Version: $KERNELSU_VERSION"
+
+    TITLE=$TITLE-$KERNELSU_VERSION
+    sed -i "s/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION=\"-$KERNELSU_VERSION-$KERNEL_NAME\"/" $DEVICE_DEFCONFIG_FILE
+else
+    echo "KernelSU Disabled"
+    KERNELSU_VERSION="Disabled"
+    sed -i "s/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION=\"-$KERNEL_NAME\"/" $DEVICE_DEFCONFIG_FILE
+fimsg "KernelSU & SUSFS"
+if [[ $KSU_ENABLED == "true" ]]; then
+    curl -LSs "https://raw.githubusercontent.com/$KERNELSU_REPO/v3.2.0-legacy/kernel/setup.sh" | bash -s $KSU_TARGET
+
+    # --- BẮT ĐẦU PATCH SUSFS ---
+    msg "Injecting SUSFS Patches"
+    git clone --depth=1 -b kernel-4.14 https://gitlab.com/simonpunk/susfs4ksu.git $WORKDIR/susfs4ksu
+
+    # 1. Copy file lõi susfs vào kernel
+    cp -r $WORKDIR/susfs4ksu/kernel_patches/fs/* fs/
+    mkdir -p include/linux
+    cp -r $WORKDIR/susfs4ksu/kernel_patches/include/linux/* include/linux/
+
+    # 2. Patch kernel chính với cờ -F 3
+    patch -p1 -F 3 < $WORKDIR/susfs4ksu/kernel_patches/50_add_susfs_in_kernel-4.14.patch
+    
+    # 3. Patch KernelSU-Next (dùng -p0 và --forward để bỏ qua phần đã tồn tại)
+    if [ -d "KernelSU-Next" ]; then
+        cd KernelSU-Next
+        if [ -f "$WORKDIR/susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch" ]; then
+            patch -p0 -F 3 --forward < "$WORKDIR/susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch" || true
+        fi
+        cd ..
+    fi
+
+    # 4. Tự động chèn cờ cấu hình SUSFS vào defconfig
+    echo "CONFIG_KSU_SUSFS=y" >> $DEVICE_DEFCONFIG_FILE
+    echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> $DEVICE_DEFCONFIG_FILE
+    echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> $DEVICE_DEFCONFIG_FILE
+    echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT=y" >> $DEVICE_DEFCONFIG_FILE
+    # --- KẾT THÚC PATCH SUSFS ---
+
+    echo "CONFIG_KPROBES=y" >> $DEVICE_DEFCONFIG_FILE
+    echo "CONFIG_HAVE_KPROBES=y" >> $DEVICE_DEFCONFIG_FILE
+    echo "CONFIG_KPROBE_EVENTS=y" >> $DEVICE_DEFCONFIG_FILE
+
+    KSU_GIT_VERSION=$(cd KernelSU-Next && git rev-list --count HEAD)
+    KERNELSU_VERSION=$(($KSU_GIT_VERSION + 10200))
+    msg "KernelSU Version: $KERNELSU_VERSION"
 
     TITLE=$TITLE-$KERNELSU_VERSION
     sed -i "s/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION=\"-$KERNELSU_VERSION-$KERNEL_NAME\"/" $DEVICE_DEFCONFIG_FILE
