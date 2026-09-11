@@ -171,7 +171,7 @@ else
     echo "KernelSU Disabled"
     KERNELSU_VERSION="Disabled"
     sed -i "s/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION=\"-$KERNEL_NAME\"/" $DEVICE_DEFCONFIG_FILE
-fimsg "KernelSU & SUSFS"
+fi  msg "KernelSU & SUSFS"
 if [[ $KSU_ENABLED == "true" ]]; then
     curl -LSs "https://raw.githubusercontent.com/$KERNELSU_REPO/v3.2.0-legacy/kernel/setup.sh" | bash -s $KSU_TARGET
 
